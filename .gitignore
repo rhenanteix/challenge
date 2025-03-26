@@ -34,3 +34,6 @@ test-reporter.xml
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Arquivos de ambiente
+.env
