@@ -1,15 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { suite, test } from '@testdeck/jest'
 import { ContentRepository } from 'src/content/repository'
 import { DataSource } from 'typeorm'
 import { Content } from 'src/content/entity'
 
-@suite
-export class ContentRepositoryUnitTest {
-  private contentRepository: ContentRepository
-  private dataSource: DataSource
+describe('ContentRepository', () => {
+  let contentRepository: ContentRepository
+  let dataSource: DataSource
 
-  private readonly mockContent: Content = {
+  const mockContent: Content = {
     id: '4372ebd1-2ee8-4501-9ed5-549df46d0eb0',
     title: 'Sample Content',
     description: 'Test Description',
@@ -19,53 +17,46 @@ export class ContentRepositoryUnitTest {
     type: 'pdf',
   } as Content
 
-  async before() {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContentRepository,
         {
           provide: DataSource,
-          useValue: {
-            query: jest.fn(),
-          },
+          useValue: { query: jest.fn() },
         },
       ],
     }).compile()
 
-    this.contentRepository = module.get<ContentRepository>(ContentRepository)
-    this.dataSource = module.get<DataSource>(DataSource)
-  }
+    contentRepository = module.get<ContentRepository>(ContentRepository)
+    dataSource = module.get<DataSource>(DataSource)
+  })
 
-  @test
-  async '[findOne] Should return content when found'() {
-    jest.spyOn(this.dataSource, 'query').mockResolvedValue([this.mockContent])
+  it('[findOne] Should return content when found', async () => {
+    jest.spyOn(dataSource, 'query').mockResolvedValue([mockContent])
 
-    const result = await this.contentRepository.findOne(this.mockContent.id)
+    const result = await contentRepository.findOne(mockContent.id)
 
-    expect(this.dataSource.query).toHaveBeenCalledWith(
-      `SELECT * FROM contents WHERE id = '${this.mockContent.id}' AND deleted_at IS NULL LIMIT 1`,
+    expect(dataSource.query).toHaveBeenCalledWith(
+      `SELECT * FROM contents WHERE id = '${mockContent.id}' AND deleted_at IS NULL LIMIT 1`,
     )
-    expect(result).toStrictEqual(this.mockContent)
-  }
+    expect(result).toStrictEqual(mockContent)
+  })
 
-  @test
-  async '[findOne] Should return null if content is not found'() {
-    jest.spyOn(this.dataSource, 'query').mockResolvedValue([])
+  it('[findOne] Should return null if content is not found', async () => {
+    jest.spyOn(dataSource, 'query').mockResolvedValue([])
 
-    const result = await this.contentRepository.findOne('non-existent-id')
+    const result = await contentRepository.findOne('non-existent-id')
 
-    expect(this.dataSource.query).toHaveBeenCalledWith(
+    expect(dataSource.query).toHaveBeenCalledWith(
       `SELECT * FROM contents WHERE id = 'non-existent-id' AND deleted_at IS NULL LIMIT 1`,
     )
     expect(result).toBeNull()
-  }
+  })
 
-  @test
-  async '[findOne] Should throw error if database query fails'() {
-    jest.spyOn(this.dataSource, 'query').mockRejectedValue(new Error('Database error'))
+  it('[findOne] Should throw error if database query fails', async () => {
+    jest.spyOn(dataSource, 'query').mockRejectedValue(new Error('Database error'))
 
-    await expect(this.contentRepository.findOne(this.mockContent.id)).rejects.toThrow(
-      'Database error',
-    )
-  }
-}
+    await expect(contentRepository.findOne(mockContent.id)).rejects.toThrow('Database error')
+  })
+})
